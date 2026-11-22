@@ -127,6 +127,15 @@ class Launcher(Gtk.Application):
         hint.add_css_class("dim"); hint.set_xalign(0)
         row2.append(hint)
         box_music.append(row2)
+
+        row3 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.btn_preview = Gtk.Button(label="试听 30 秒（经典曲 1）")
+        self.btn_preview.connect("clicked", self._on_preview)
+        row3.append(self.btn_preview)
+        self.lbl_preview = Gtk.Label(label="")
+        self.lbl_preview.add_css_class("dim"); self.lbl_preview.set_xalign(0)
+        row3.append(self.lbl_preview)
+        box_music.append(row3)
         self.lbl_music = Gtk.Label(label="")
         self.lbl_music.add_css_class("dim")
         self.lbl_music.set_xalign(0)
@@ -266,6 +275,30 @@ class Launcher(Gtk.Application):
         self.lbl_game.set_text(str(p))
         self.log(f">> 游戏目录: {p}")
         self._refresh_music()
+
+    def _on_preview(self, _b):
+        import subprocess, shutil
+        if getattr(self, "_preview_proc", None) and self._preview_proc.poll() is None:
+            self._preview_proc.terminate()
+            self._preview_proc = None
+            self.lbl_preview.set_text("已停止")
+            return
+        for base in (Path.home() / "Music/roadrush-classic",
+                     Path("/tmp/rr-gen-test"),
+                     Path(self.cfg.game_dir) / "AUDIO/MUSIC._orig"):
+            f = base / "GRUNGE1.flac"
+            if f.is_file():
+                break
+        else:
+            self.lbl_preview.set_text("没找到 GRUNGE1.flac（先点『生成经典曲』）")
+            return
+        player = shutil.which("paplay") or shutil.which("pw-play")
+        if not player:
+            self.lbl_preview.set_text("缺 paplay/pw-play")
+            return
+        self._preview_proc = subprocess.Popen(["timeout", "-s", "TERM", "30", player, str(f)],
+                                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.lbl_preview.set_text(f"正在播放 30 秒：{f.name}")
 
     def _on_generate(self, _b):
         if not self.cfg.game_dir:
