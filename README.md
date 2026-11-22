@@ -2,6 +2,8 @@
 
 **Road Rash 30th Anniversary Edition 的 Linux 启动器 + 一套把"经典 MIDI 音乐"救回来的工具链。**
 
+![launcher](docs/screenshot.png)
+
 背景：这版 30 周年是重新编译的（PDB 路径里甚至带 `CLAUDE` 和 `BETA-2`），但引擎和音频一层没动——
 还是 DirectDraw、还是 AWE32 硬件音源路线、还是 8-bit/22.05 kHz 的 `.RRA`。结果就是：
 
