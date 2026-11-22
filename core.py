@@ -150,6 +150,41 @@ def music_mode_script(game_dir: Path) -> Path:
     return game_dir / "music-mode.sh"
 
 
+def _tool_script(name: str) -> Path | None:
+    here = Path(__file__).resolve().parent
+    for cand in (here / name, here / "tools" / name,
+                 Path("/usr/share/roadrush-launcher/tools") / name):
+        if cand.is_file():
+            return cand
+    return None
+
+
+def generate_classic_music(game_dir: Path, log=print, out_dir: Path | None = None) -> bool:
+    """从用户自己的游戏文件一键生成经典 MIDI 曲并装入游戏（约 30 秒）"""
+    script = _tool_script("make-classic-music.sh")
+    if not script:
+        log("!! 找不到 make-classic-music.sh")
+        return False
+    out = out_dir or (Path.home() / "Music/roadrush-classic")
+    cmd = ["bash", str(script), "--game", str(game_dir), "--out", str(out), "--install"]
+    log(">> 开始生成经典曲（解码 MIDS → 渲染 → 装入游戏）…")
+    try:
+        env = dict(os.environ, GAME_DIR=str(game_dir))
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=900, env=env)
+        for line in (p.stdout or "").splitlines():
+            log("  " + line)
+        if p.returncode != 0:
+            for line in (p.stderr or "").splitlines()[-8:]:
+                log("  ! " + line)
+            log(f"!! 生成失败（退出码 {p.returncode}）")
+            return False
+        log(">> 生成并装入完成")
+        return True
+    except Exception as e:                       # noqa: BLE001
+        log(f"!! 生成失败: {e}")
+        return False
+
+
 def get_music_status(game_dir: Path) -> dict:
     """返回 {'classic': n, 'original': n, 'menu': slot}"""
     music = game_dir / "AUDIO/MUSIC"

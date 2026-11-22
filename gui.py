@@ -118,6 +118,15 @@ class Launcher(Gtk.Application):
         row.append(self.btn_old)
         row.append(self.btn_new)
         box_music.append(row)
+
+        row2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.btn_gen = Gtk.Button(label="生成经典曲（从游戏文件，约 30 秒）")
+        self.btn_gen.connect("clicked", self._on_generate)
+        row2.append(self.btn_gen)
+        hint = Gtk.Label(label="首次使用：先点这个，本地从你自己的 AUDIO/MUSIC/*.MID 生成")
+        hint.add_css_class("dim"); hint.set_xalign(0)
+        row2.append(hint)
+        box_music.append(row2)
         self.lbl_music = Gtk.Label(label="")
         self.lbl_music.add_css_class("dim")
         self.lbl_music.set_xalign(0)
@@ -257,6 +266,20 @@ class Launcher(Gtk.Application):
         self.lbl_game.set_text(str(p))
         self.log(f">> 游戏目录: {p}")
         self._refresh_music()
+
+    def _on_generate(self, _b):
+        if not self.cfg.game_dir:
+            self.log("!! 先选择游戏目录")
+            return
+        self.btn_gen.set_sensitive(False)
+        def work():
+            try:
+                ok = core.generate_classic_music(Path(self.cfg.game_dir), self.log)
+                if ok:
+                    self.cfg.music_mode = "classic"; self.cfg.save()
+            finally:
+                ui(lambda: (self.btn_gen.set_sensitive(True), self._refresh_music())[1])
+        threading.Thread(target=work, daemon=True).start()
 
     def _apply_music(self, mode: str):
         if not self.cfg.game_dir:
