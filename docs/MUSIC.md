@@ -36,6 +36,13 @@ fluidsynth -ni -F /tmp/r.wav -r 44100 -g 0.8 \
 ffmpeg -y -i /tmp/r.wav -af loudnorm=I=-16:TP=-1.5:LRA=11 -ar 44100 -c:a flac GRUNGE1.flac
 ```
 
+### 会让"结尾缺失"的两个坑（已修）
+1. **尾部残块不是从第 0 字节开始记录**：有些曲子尾部还带一条 12 字节头
+   `[u32 本段字节数][u32 delta][u32 0]`，直接按记录解析会在第一条就断掉 → 整段结尾丢失
+   （GRUNGE2 丢 170 条、GRUNGE5 丢 109 条）。现在会先做对齐搜索（0/12/8/4/16/20 偏移）。
+2. **清理时丢弃孤立 note-off 会连它的 delta 一起丢**：时间轴会整体缩短、结尾被"压缩"。
+   现在被丢弃事件的 delta 会补偿给下一条事件。
+
 ### 三个必须的合成器参数
 - `synth.min-note-length=0`：默认 10ms，会直接吞掉极短音（每首 1~4% 的音符 <10ms）
 - `synth.polyphony=1024`：默认 256 在密集段落会 voice stealing，听起来像"卡一下"

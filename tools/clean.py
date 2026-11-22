@@ -12,24 +12,30 @@ from mids2smf import read_mids, build
 def clean(events):
     out, active = [], {}
     fixed_retrig = dropped_off = 0
+    pending = 0                      # 被丢弃事件携带的 delta，必须补偿给下一条
+    def emit(item):
+        nonlocal pending
+        item[0] += pending; pending = 0
+        out.append(item)
     for delta, st, d1, d2 in events:
         if st is None:
-            out.append([delta, st, d1, d2]); continue
+            emit([delta, st, d1, d2]); continue
         hi = st & 0xF0; ch = st & 0x0F; key = (ch, d1)
         if hi == 0x90 and d2 > 0:                 # note-on
             if key in active:                     # 同音未关就重触发
-                out.append([0, 0x80 | ch, d1, 0])
+                emit([0, 0x80 | ch, d1, 0])
                 fixed_retrig += 1
             active[key] = True
-            out.append([delta, st, d1, d2])
+            emit([delta, st, d1, d2])
         elif hi == 0x80 or (hi == 0x90 and d2 == 0):   # note-off
             if key in active:
                 active.pop(key)
-                out.append([delta, st, d1, d2])
+                emit([delta, st, d1, d2])
             else:
-                dropped_off += 1                  # 孤立 off：丢弃
+                dropped_off += 1                  # 孤立 off：丢弃，但 delta 补偿给下一条
+                pending += delta
         else:
-            out.append([delta, st, d1, d2])
+            emit([delta, st, d1, d2])
     for (ch, key) in list(active):                # 收尾
         out.append([0, 0x80 | ch, key, 0]); active.pop((ch, key))
     return out, fixed_retrig, dropped_off

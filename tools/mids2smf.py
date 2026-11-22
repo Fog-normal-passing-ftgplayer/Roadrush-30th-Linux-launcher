@@ -33,7 +33,28 @@ def read_mids(path):
     for k in range(nb):
         if not take(8 + k * ST, 341): break
     # 尾部部分块（没有 0xFFC 标记）
-    tail = 8 + nb * ST
+    # 有些曲子尾部还带一条 12 字节头（[u32 本段字节数][u32 delta][u32 0]），
+    # 直接按记录解析会在第一条就断掉 → 整段结尾丢失。这里先做对齐搜索。
+    tail0 = 8 + nb * ST
+    def _valid_at(off):
+        if off + 12 > len(body): return False
+        st, d1, d2, pad = body[off:off+4]
+        if (st >> 4) not in VALID or pad != 0: return False
+        return struct.unpack('<I', body[off+4:off+8])[0] != 0xFFFFFFFF
+    def _run(off, need=8):
+        cnt = 0
+        while _valid_at(off):
+            cnt += 1; off += 12
+            if cnt >= need: return True
+        return cnt >= need
+    tail = tail0
+    for skip in (0, 12, 8, 4, 16, 20):          # 常见：无头 / 12 字节头
+        if _run(tail0 + skip):
+            if skip:                            # 跳过的头部里可能带 delta，计入时间
+                for k in range(skip // 12):
+                    total += struct.unpack('<I', body[tail0 + k*12 + 4: tail0 + k*12 + 8])[0]
+            tail = tail0 + skip
+            break
     while tail + 12 <= len(body):
         st, d1, d2, pad = body[tail:tail+4]
         if (st >> 4) not in VALID: break
