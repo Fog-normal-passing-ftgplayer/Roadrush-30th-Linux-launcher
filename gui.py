@@ -139,6 +139,15 @@ class Launcher(Gtk.Application):
         self.lbl_music.add_css_class("dim")
         self.lbl_music.set_xalign(0)
         box_music.append(self.lbl_music)
+
+        note = Gtk.Label(label=(
+            "注：经典乐曲是同原版音轨的重编版，并非 100% 原版，会与原版产生区别。"
+            "且碍于游戏本身，乐曲为随机播放，所以你可能会在赛道上随机到主界面音乐。"))
+        note.add_css_class("dim")
+        note.set_xalign(0)
+        note.set_wrap(True)
+        note.set_selectable(True)
+        box_music.append(note)
         root.append(box_music)
 
         # 选项
@@ -311,6 +320,11 @@ class Launcher(Gtk.Application):
         if getattr(self, "_loading", False):
             return
         want = btn.get_active()
+        # 防御：程序化 set_active 触发的信号若与磁盘实际状态一致，就不要改目录
+        if self.cfg.game_dir and want == core.get_cars_enabled(Path(self.cfg.game_dir)):
+            self.cfg.cars = want
+            self.cfg.save()
+            return
         self.cfg.cars = want
         if not self.cfg.game_dir:
             self.cfg.save()
