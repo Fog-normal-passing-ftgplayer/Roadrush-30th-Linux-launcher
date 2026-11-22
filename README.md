@@ -57,15 +57,26 @@ GAME_DIR=/path/to/game SRC=~/Music/roadrash-95-official tools/music-mode.sh clas
 
 配置文件：`~/.config/roadrush-launcher/config.json`
 
-## 安装（三种方式，详见 [docs/INSTALL-NON-AUR.md](docs/INSTALL-NON-AUR.md)）
+## 安装
+**方式 1（推荐，不需要 AUR 账号）：本地编译成系统包**
 ```bash
-# 免 root，用户级
 git clone https://github.com/Fog-normal-passing-ftgplayer/Roadrush-30th-Linux-launcher.git
-cd Roadrush-30th-Linux-launcher && ./install.sh
-
-# 或者本地编译成系统包（不需要 AUR 账号）
-cd packaging/aur && makepkg -si
+cd Roadrush-30th-Linux-launcher/packaging/aur
+makepkg -si
 ```
+
+免 root 用户级安装：`cd Roadrush-30th-Linux-launcher && ./install.sh`
+
+### 经典 MIDI 音乐：一条命令搞定（不需要手动转换）
+```bash
+cd Roadrush-30th-Linux-launcher/tools
+./make-classic-music.sh --game /path/to/Road.Rash.30th.Anniversary.Edition --install
+```
+它会在 ~30 秒内做完 MIDS 解码 → MIDI 清理/起音对齐 → 按各曲 BPM 渲染 → 响度归一 → 替换游戏
+槽位（原版自动备份，菜单曲 `HB_TRIP` 保持原版）。产物在 `~/Music/roadrush-classic/`。
+
+> **本仓库不包含任何音频文件**：音乐是从**你自己**的游戏文件现场生成的，理由见
+> [DISCLAIMER.md](DISCLAIMER.md)。
 
 ## AUR（Arch Linux 一键安装）
 ```bash
@@ -85,7 +96,7 @@ docs/TROUBLESHOOTING.md 四个坑的原因与修法（安装检测 / dxva2 / Alt
 docs/MUSIC.md           BPM 表、渲染流水线、槽位映射
 ```
 
-## 法律声明
+## 法律声明（详见 [DISCLAIMER.md](DISCLAIMER.md)）
 本仓库**不包含任何游戏资源**（无 `.RRA`/`.MID`/`.SBK`/`.sf2`/渲染出的音频）。
 工具只对用户自己合法持有的游戏文件做转换。Road Rash 及相关素材版权归 Electronic Arts；
 转换产物请勿分发。

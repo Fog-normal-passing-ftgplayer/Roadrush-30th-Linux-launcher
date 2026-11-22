@@ -11,6 +11,14 @@
 
 BPM 是逐首试听后定的（原始 MIDS **不存 tempo**，SMF 缺省 120 BPM 会偏慢）。
 
+## 一键生成（推荐）
+```bash
+tools/make-classic-music.sh --game /path/to/game [--out DIR] [--install]
+```
+约 30 秒跑完 5 首，产物写到 `~/Music/roadrush-classic/`；`--install` 会顺带替换游戏槽位。
+
+下面是它内部做的事（想手动调参时看）：
+
 ## 渲染流水线
 ```bash
 GAME=/path/to/Road.Rash.30th.Anniversary.Edition
