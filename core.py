@@ -187,7 +187,7 @@ def classic_sources_missing(src_dir: Path | None = None) -> list[str]:
 
 
 def music_mode_script(game_dir: Path) -> Path:
-    """游戏目录里优先；也支持 AUR 安装位置 / 源码树里的 tools/"""
+    """游戏目录里优先；也支持系统安装位置 / 源码树里的 tools/"""
     here = Path(__file__).resolve().parent
     for cand in (game_dir / "music-mode.sh",
                  here / "music-mode.sh",

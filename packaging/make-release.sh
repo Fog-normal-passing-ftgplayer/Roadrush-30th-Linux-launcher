@@ -6,7 +6,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUT="${1:-$HERE/../dist}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-cp "$HERE/aur/PKGBUILD" "$HERE/aur/roadrush-launcher-git.install" "$WORK/"
+cp "$HERE/pkgbuild/PKGBUILD" "$HERE/pkgbuild/roadrush-launcher-git.install" "$WORK/"
 ( cd "$WORK" && makepkg -f --nocheck --noconfirm >/dev/null )
 mkdir -p "$OUT"
 cp "$WORK"/*.pkg.tar.zst "$OUT/"

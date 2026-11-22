@@ -43,34 +43,34 @@
 | `music-mode.sh` | 原版/经典曲 两套配置切换（含备份与还原） |
 | `play.sh` / `start-midi-synth.sh` | 不依赖 GUI 的启动 / 软音源拉起 |
 
-## 安装与使用
+## 安装
 
+**依赖**：`python-gobject`、`gtk4`；音乐功能需要 `fluidsynth` + `soundfont-fluid`（+ `ffmpeg`）
+
+**方式 1（推荐）：本地编译成系统包**
 ```bash
-# 依赖
-sudo pacman -S python-gobject gtk4 fluidsynth soundfont-fluid   # Arch
-# 可选：qsynth（GUI 试听）
+git clone https://github.com/Fog-normal-passing-ftgplayer/Roadrush-30th-Linux-launcher.git
+cd Roadrush-30th-Linux-launcher/packaging/pkgbuild
+makepkg -si
+```
 
-# 启动器
-python3 gui.py
-./install.sh          # 装进应用菜单
+**方式 2：免 root 用户级安装**
+```bash
+cd Roadrush-30th-Linux-launcher && ./install.sh
+```
+
+其它方式（自建 pacman 源等）见 [docs/INSTALL.md](docs/INSTALL.md)。
+
+## 使用
+```bash
+python3 gui.py                # 直接跑（或从应用菜单启动）
 
 # 命令行（不依赖 GUI）
 python3 core.py --detect
 GAME_DIR=/path/to/game tools/play.sh
-GAME_DIR=/path/to/game SRC=~/Music/roadrash-95-official tools/music-mode.sh classic
+GAME_DIR=/path/to/game SRC=~/Music/roadrush-classic tools/music-mode.sh classic
 ```
-
 配置文件：`~/.config/roadrush-launcher/config.json`
-
-## 安装
-**方式 1（推荐，不需要 AUR 账号）：本地编译成系统包**
-```bash
-git clone https://github.com/Fog-normal-passing-ftgplayer/Roadrush-30th-Linux-launcher.git
-cd Roadrush-30th-Linux-launcher/packaging/aur
-makepkg -si
-```
-
-免 root 用户级安装：`cd Roadrush-30th-Linux-launcher && ./install.sh`
 
 ### 经典 MIDI 音乐：一条命令搞定（不需要手动转换）
 ```bash
@@ -83,12 +83,6 @@ cd Roadrush-30th-Linux-launcher/tools
 > **本仓库不包含任何音频文件**：音乐是从**你自己**的游戏文件现场生成的，理由见
 > [DISCLAIMER.md](DISCLAIMER.md)。
 
-## AUR（Arch Linux 一键安装）
-```bash
-yay -S roadrush-launcher-git      # 装好后应用菜单里直接启动
-```
-打包文件在 `packaging/aur/`（`PKGBUILD` + `.install` + `.SRCINFO`）。
-
 ## 目录结构
 ```
 gui.py                  GTK4 界面（主窗口 + 首次运行向导）
@@ -99,6 +93,8 @@ tools/                  逆向与音频工具链（见上表）
 docs/FORMATS.md         四种音频容器的逆向笔记（MIDS / SF1 / RRA / 影片）
 docs/TROUBLESHOOTING.md 四个坑的原因与修法（安装检测 / dxva2 / Alt+Tab / MIDI 静音）
 docs/MUSIC.md           BPM 表、渲染流水线、槽位映射
+docs/INSTALL.md         三种安装方式（编译 / 自建源 / 免 root）
+packaging/pkgbuild/     PKGBUILD 与 .install（makepkg 用）
 ```
 
 ## 法律声明（详见 [DISCLAIMER.md](DISCLAIMER.md)）
