@@ -20,6 +20,9 @@ CONFIG_PATH = CONFIG_DIR / "config.json"
 GAME_EXE = "RoadRash95.exe"
 DEFAULT_PROTON_PREFIX = Path.home() / ".local/share/road-rash-30th"
 MENU_LOCK_SLOT = "HB_TRIP"          # 前端锁定的原版曲（Jukebox 里锁定 HB_Trip）
+CARS_DIR = "DATA/CARS"             # 车辆资源目录（改名即可禁用，游戏不刷新路上车流）
+CARS_DISABLED = "DATA/CARS.disabled"
+CLASSIC_TRACKS = ("GRUNGE1", "GRUNGE2", "GRUNGE3", "GRUNGE4", "GRUNGE5")
 
 PROTON_GLOBS = [
     "~/.local/share/Steam/compatibilitytools.d/*/proton",
@@ -38,6 +41,7 @@ class Config:
     virtual_desktop: bool = True  # 虚拟桌面（解决 Alt+Tab 才恢复/黑屏）
     midi_synth: bool = True       # 起 fluidsynth + ALSA 桥（Game music 用）
     music_mode: str = "classic"   # "classic" | "original"
+    cars: bool = True             # 车辆（DATA/CARS 是否启用）
     reg_done: bool = False
 
     @classmethod
@@ -138,6 +142,50 @@ def detect_game_dirs() -> list[Path]:
 
 
 # ------------------------------------------------------------ 音乐切换 ----
+# ------------------------------------------------------------ 车辆开关 ----
+def get_cars_enabled(game_dir: Path) -> bool:
+    return (game_dir / CARS_DIR).is_dir()
+
+
+def set_cars(game_dir: Path, enabled: bool, log=print) -> bool:
+    """有车 / 无车：单纯把 DATA/CARS 目录改名（不改任何游戏文件内容）"""
+    on = game_dir / CARS_DIR
+    off = game_dir / CARS_DISABLED
+    try:
+        if enabled:
+            if on.is_dir():
+                return True
+            if off.is_dir():
+                off.rename(on)
+                log(">> 车辆已启用（DATA/CARS.disabled → DATA/CARS）")
+                return True
+            log(f"!! 既没有 {CARS_DIR} 也没有 {CARS_DISABLED}")
+            return False
+        if off.is_dir():
+            return True
+        if on.is_dir():
+            on.rename(off)
+            log(">> 车辆已禁用（DATA/CARS → DATA/CARS.disabled）")
+            return True
+        log(f"!! 找不到 {CARS_DIR}")
+        return False
+    except OSError as e:                          # noqa: BLE001
+        log(f"!! 改名失败: {e}")
+        return False
+
+
+# -------------------------------------------------------- 经典曲源文件 ----
+def classic_src_dir() -> Path:
+    """经典曲 FLAC 的来源目录（SRC 环境变量可覆盖）"""
+    env = os.environ.get("SRC")
+    return Path(env) if env else (Path.home() / "Music/roadrush-classic")
+
+
+def classic_sources_missing(src_dir: Path | None = None) -> list[str]:
+    d = src_dir or classic_src_dir()
+    return [t for t in CLASSIC_TRACKS if not (d / f"{t}.flac").is_file()]
+
+
 def music_mode_script(game_dir: Path) -> Path:
     """游戏目录里优先；也支持 AUR 安装位置 / 源码树里的 tools/"""
     here = Path(__file__).resolve().parent
@@ -169,7 +217,7 @@ def generate_classic_music(game_dir: Path, log=print, out_dir: Path | None = Non
     cmd = ["bash", str(script), "--game", str(game_dir), "--out", str(out), "--install"]
     log(">> 开始生成经典曲（解码 MIDS → 渲染 → 装入游戏）…")
     try:
-        env = dict(os.environ, GAME_DIR=str(game_dir))
+        env = dict(os.environ, GAME_DIR=str(game_dir), SRC=str(out))
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=900, env=env)
         for line in (p.stdout or "").splitlines():
             log("  " + line)
@@ -204,13 +252,19 @@ def get_music_status(game_dir: Path) -> dict:
 
 
 def apply_music_mode(game_dir: Path, mode: str, log=print) -> bool:
+    if mode == "classic":
+        missing = classic_sources_missing()
+        if missing:
+            log(f"!! 缺少经典曲源文件（{classic_src_dir()}）：{', '.join(missing)}")
+            log("   → 先点「生成经典曲（从游戏文件，约 30 秒）」，或设置 SRC 指向已有目录")
+            return False
     script = music_mode_script(game_dir)
     if not script.is_file():
         log(f"!! 找不到 {script}")
         return False
     script.chmod(0o755)
     try:
-        env = dict(os.environ, GAME_DIR=str(game_dir))
+        env = dict(os.environ, GAME_DIR=str(game_dir), SRC=str(classic_src_dir()))
         p = subprocess.run([str(script), mode], cwd=str(game_dir), env=env, capture_output=True,
                            text=True, timeout=300)
         for line in (p.stdout or "").splitlines():

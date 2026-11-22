@@ -111,7 +111,6 @@ class Launcher(Gtk.Application):
         box_music = self._card("音乐版本（随时切换，重开游戏生效）")
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self.btn_old = Gtk.Button(label="应用：经典 MIDI 曲")
-        self.btn_old.add_css_class("suggested-action")
         self.btn_new = Gtk.Button(label="应用：30周年纪念版新曲")
         self.btn_old.connect("clicked", lambda *_: self._apply_music("classic"))
         self.btn_new.connect("clicked", lambda *_: self._apply_music("original"))
@@ -148,8 +147,11 @@ class Launcher(Gtk.Application):
         self.chk_vd.set_active(self.cfg.virtual_desktop)
         self.chk_midi = Gtk.CheckButton(label="启动 MIDI 软音源（fluidsynth + ALSA 桥，给 Game music 用）")
         self.chk_midi.set_active(self.cfg.midi_synth)
+        self.chk_cars = Gtk.CheckButton(label="有车（取消则把 DATA/CARS 改名，路上不再有车流）")
+        self.chk_cars.connect("toggled", self._on_cars_toggle)
         box_opt.append(self.chk_vd)
         box_opt.append(self.chk_midi)
+        box_opt.append(self.chk_cars)
         root.append(box_opt)
 
         # 按钮
@@ -202,17 +204,36 @@ class Launcher(Gtk.Application):
             self.lbl_runner_badge.remove_css_class("badge-off")
             self.lbl_runner_badge.add_css_class("badge-on")
         self._refresh_music()
+        self._sync_cars()
         self._rescan_runners(silent=True)
+
+    MUSIC_LABELS = {"classic": "应用：经典 MIDI 曲", "original": "应用：30周年纪念版新曲"}
+
+    def _style_music(self, mode: str):
+        """当前生效的模式：按钮高亮 + ✔ 前缀（色块会跟着变）"""
+        for m, btn in (("classic", self.btn_old), ("original", self.btn_new)):
+            base = self.MUSIC_LABELS[m]
+            if m == mode:
+                btn.set_label("✔ " + base)
+                btn.add_css_class("suggested-action")
+            else:
+                btn.set_label(base)
+                btn.remove_css_class("suggested-action")
 
     def _refresh_music(self):
         if not self.cfg.game_dir:
             self.lbl_music.set_text("（未选择游戏目录）")
+            self._style_music("")
             return
         st = core.get_music_status(Path(self.cfg.game_dir))
         n_old, n_new = st["classic"], st["original"]
-        cur = "经典 MIDI 曲" if n_old > n_new else "30周年纪念版新曲"
+        cur_mode = "classic" if n_old > n_new else "original"
+        cur = "经典 MIDI 曲" if cur_mode == "classic" else "30周年纪念版新曲"
+        missing = core.classic_sources_missing()
+        extra = f" · 经典曲源缺 {len(missing)} 个（点『生成经典曲』）" if missing else ""
         self.lbl_music.set_text(
-            f"当前: {cur}   （经典曲 {n_old} 个 / 30周年新曲 {n_new} 个）")
+            f"当前: {cur}   （经典曲 {n_old} 个 / 30周年新曲 {n_new} 个）{extra}")
+        self._style_music(cur_mode)
 
     def _rescan_runners(self, silent=False):
         self._loading = True
@@ -275,6 +296,29 @@ class Launcher(Gtk.Application):
         self.lbl_game.set_text(str(p))
         self.log(f">> 游戏目录: {p}")
         self._refresh_music()
+        core.set_cars(p, self.cfg.cars, self.log)
+        self._sync_cars()
+
+    def _sync_cars(self):
+        self._loading = True
+        if self.cfg.game_dir:
+            self.chk_cars.set_active(core.get_cars_enabled(Path(self.cfg.game_dir)))
+        else:
+            self.chk_cars.set_active(self.cfg.cars)
+        self._loading = False
+
+    def _on_cars_toggle(self, btn):
+        if getattr(self, "_loading", False):
+            return
+        want = btn.get_active()
+        self.cfg.cars = want
+        if not self.cfg.game_dir:
+            self.cfg.save()
+            self.log("!! 先选择游戏目录（已记录偏好，选完目录会自动应用）")
+            return
+        ok = core.set_cars(Path(self.cfg.game_dir), want, self.log)
+        self.cfg.save()
+        self.log(f">> {'有车' if want else '无车'}模式：{'已应用（重开游戏生效）' if ok else '应用失败'}")
 
     def _on_preview(self, _b):
         import subprocess, shutil
@@ -327,6 +371,9 @@ class Launcher(Gtk.Application):
             self.log(">> 切换完成（重开游戏生效）")
         else:
             self.log("!! 切换失败，见上面日志")
+            if mode == "classic":
+                self.btn_gen.add_css_class("suggested-action")
+                self.log(">> 提示：先点上面高亮的「生成经典曲」，~30 秒后再切")
         self._refresh_music()
 
     def _on_save(self, _b):
@@ -345,7 +392,9 @@ class Launcher(Gtk.Application):
             return
         self.cfg.virtual_desktop = self.chk_vd.get_active()
         self.cfg.midi_synth = self.chk_midi.get_active()
+        self.cfg.cars = self.chk_cars.get_active()
         self.cfg.save()
+        core.set_cars(Path(self.cfg.game_dir), self.cfg.cars, self.log)
         self.log("=== 启动游戏 ===")
         self.proc = core.launch(self.cfg, self.log)
         if self.proc:

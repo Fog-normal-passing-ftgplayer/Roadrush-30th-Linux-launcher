@@ -6,7 +6,7 @@ set -u
 GAME_DIR="${GAME_DIR:-${1:-}}"
 [ -n "${GAME_DIR}" ] || { echo "用法: GAME_DIR=/path/to/game $0 status|original|classic"; exit 1; }
 MUSIC="$GAME_DIR/AUDIO/MUSIC"; BACKUP="$GAME_DIR/AUDIO/MUSIC._orig"
-SRC="${SRC:-$HOME/Music/roadrash-95-official}"
+SRC="${SRC:-$HOME/Music/roadrush-classic}"
 BITS="${BITS:-8}"
 MENU_SLOTS="HB_TRIP"          # 前端锁定的原版曲（Jukebox 锁定 HB_Trip），永不被替换
 declare -A MAP=(
@@ -21,7 +21,16 @@ conv() { local c=("-c:a" "pcm_u8"); [ "$1" = "16" ] && c=("-c:a" "pcm_s16le")
 case "${2:-${1:-status}}" in
   original) cp -a "$BACKUP"/*.RRA "$MUSIC"/ && echo ">> 已还原全部原版音乐";;
   classic)
-    cp -a "$BACKUP"/*.RRA "$MUSIC"/
+    missing=""
+    for t in GRUNGE1 GRUNGE2 GRUNGE3 GRUNGE4 GRUNGE5; do
+      [ -f "$SRC/$t.flac" ] || missing="$missing $t"
+    done
+    if [ -n "$missing" ]; then
+      echo "!! 缺少经典曲源文件（$SRC）：$missing" >&2
+      echo "   先运行: tools/make-classic-music.sh --game \"$GAME_DIR\" --install" >&2
+      exit 2
+    fi
+    cp -a "$BACKUP"/*.RRA "$MUSIC"/          # 先回到原版做基线（不打印）
     for slot in "${!MAP[@]}"; do
       case " $MENU_SLOTS " in *" $slot "*) continue;; esac
       f="$SRC/${MAP[$slot]}.flac"; [ -f "$f" ] || continue
