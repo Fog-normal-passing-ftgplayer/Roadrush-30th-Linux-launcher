@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.sf2
+*.flac
+*.wav
+*.RRA
+*.MID
+*.SBK
+.venv/
+build/
+dist/
