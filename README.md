@@ -7,7 +7,7 @@
 背景：这版 30 周年是重新编译的（PDB 路径里甚至带 `CLAUDE` 和 `BETA-2`），但引擎和音频一层没动——
 还是 DirectDraw、还是 AWE32 硬件音源路线、还是 8-bit/22.05 kHz 的 `.RRA`。结果就是：
 
-- 免安装版在 Wine 里只弹一个空 `Warning` 就退出（安装检测读注册表）
+- 游戏运行后在 Wine 里只弹一个空 `Warning` 就退出（安装检测读注册表）
 - 片头影片在 Wine 下要么崩（dxva2），要么黑屏静音（winegstreamer 解析失败）
 - 全屏后时不时"卡住"，要 Alt+Tab 才恢复（XWayland + KWin 遮挡判定 + 影片独立窗口）
 - **`Game music`（原版 MIDI）在没 AWE 卡的机器上永远没声音**
