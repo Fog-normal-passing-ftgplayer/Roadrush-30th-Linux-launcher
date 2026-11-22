@@ -57,6 +57,16 @@ GAME_DIR=/path/to/game SRC=~/Music/roadrash-95-official tools/music-mode.sh clas
 
 配置文件：`~/.config/roadrush-launcher/config.json`
 
+## 安装（三种方式，详见 [docs/INSTALL-NON-AUR.md](docs/INSTALL-NON-AUR.md)）
+```bash
+# 免 root，用户级
+git clone https://github.com/Fog-normal-passing-ftgplayer/Roadrush-30th-Linux-launcher.git
+cd Roadrush-30th-Linux-launcher && ./install.sh
+
+# 或者本地编译成系统包（不需要 AUR 账号）
+cd packaging/aur && makepkg -si
+```
+
 ## AUR（Arch Linux 一键安装）
 ```bash
 yay -S roadrush-launcher-git      # 装好后应用菜单里直接启动
