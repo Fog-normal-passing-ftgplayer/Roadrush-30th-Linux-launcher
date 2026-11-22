@@ -139,6 +139,14 @@ def detect_game_dirs() -> list[Path]:
 
 # ------------------------------------------------------------ 音乐切换 ----
 def music_mode_script(game_dir: Path) -> Path:
+    """游戏目录里优先；也支持 AUR 安装位置 / 源码树里的 tools/"""
+    here = Path(__file__).resolve().parent
+    for cand in (game_dir / "music-mode.sh",
+                 here / "music-mode.sh",
+                 here / "tools" / "music-mode.sh",
+                 Path("/usr/share/roadrush-launcher/tools/music-mode.sh")):
+        if cand.is_file():
+            return cand
     return game_dir / "music-mode.sh"
 
 
@@ -167,7 +175,8 @@ def apply_music_mode(game_dir: Path, mode: str, log=print) -> bool:
         return False
     script.chmod(0o755)
     try:
-        p = subprocess.run([str(script), mode], cwd=str(game_dir), capture_output=True,
+        env = dict(os.environ, GAME_DIR=str(game_dir))
+        p = subprocess.run([str(script), mode], cwd=str(game_dir), env=env, capture_output=True,
                            text=True, timeout=300)
         for line in (p.stdout or "").splitlines():
             log("  " + line)

@@ -1,0 +1,58 @@
+# Maintainer: Fog-normal-passing-ftgplayer <fog-normal-passing-ftgplayer@users.noreply.github.com>
+pkgname=roadrush-launcher-git
+pkgver=r24.5967279
+pkgrel=1
+pkgdesc="Road Rash 30th Anniversary Edition 的 Linux 启动器（GTK4，Wine/Proton 自动探测，经典 MIDI 音乐切换）"
+arch=('any')
+url="https://github.com/Fog-normal-passing-ftgplayer/Roadrush-30th-Linux-launcher"
+license=('MIT')
+depends=('python' 'python-gobject' 'gtk4')
+optdepends=(
+  'fluidsynth: MIDI 软音源（给 Game music 用）'
+  'soundfont-fluid: GM 音色库 FluidR3_GM.sf2'
+  'ffmpeg: 音乐槽位转换（8/16-bit RRA）'
+  'steam: Proton 运行环境'
+  'wine: 不回退到 Proton 时使用系统 wine'
+)
+makedepends=('git')
+provides=('roadrush-launcher')
+conflicts=('roadrush-launcher')
+install="$pkgname.install"
+source=("$pkgname::git+$url.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+  local _share="$pkgdir/usr/share/roadrush-launcher"
+  install -d "$_share" "$pkgdir/usr/bin" \
+            "$pkgdir/usr/share/applications" \
+            "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+
+  cp -r "$srcdir/$pkgname/gui.py" "$srcdir/$pkgname/core.py" \
+        "$srcdir/$pkgname/assets" "$srcdir/$pkgname/tools" "$_share/"
+  install -m644 "$srcdir/$pkgname/README.md" "$srcdir/$pkgname/LICENSE" "$_share/"
+
+  install -m644 "$srcdir/$pkgname/assets/roadrush.svg" \
+     "$pkgdir/usr/share/icons/hicolor/scalable/apps/roadrush-launcher.svg"
+
+  cat > "$pkgdir/usr/bin/roadrush-launcher" <<'EOF'
+#!/bin/sh
+exec python3 /usr/share/roadrush-launcher/gui.py "$@"
+EOF
+  chmod 755 "$pkgdir/usr/bin/roadrush-launcher"
+
+  cat > "$pkgdir/usr/share/applications/roadrush-launcher.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=ROADRUSH-LINUX-LAUNCHER
+Comment=Road Rash 30th Anniversary Edition — Linux 启动器（音乐版本可切换）
+Exec=roadrush-launcher
+Icon=roadrush-launcher
+Terminal=false
+Categories=Game;
+EOF
+}

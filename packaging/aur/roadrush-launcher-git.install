@@ -1,0 +1,12 @@
+post_install() {
+  cat <<'EOF'
+==> ROADRUSH-LINUX-LAUNCHER 已安装
+    启动：应用菜单里的 "ROADRUSH-LINUX-LAUNCHER" 或命令行 roadrush-launcher
+    首次运行会自动扫描 Wine / Proton 列表，选一个注册即可。
+    可选依赖（音乐功能）：fluidsynth + soundfont-fluid + ffmpeg
+    注意：本包不含任何游戏资源；经典 MIDI 曲需要自己用 tools/ 里的脚本从游戏文件转换。
+EOF
+  update-desktop-database -q /usr/share/applications 2>/dev/null || true
+  gtk-update-icon-cache -q -t /usr/share/icons/hicolor 2>/dev/null || true
+}
+post_upgrade() { post_install; }

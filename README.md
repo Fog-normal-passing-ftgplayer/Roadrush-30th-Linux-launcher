@@ -57,6 +57,12 @@ GAME_DIR=/path/to/game SRC=~/Music/roadrash-95-official tools/music-mode.sh clas
 
 配置文件：`~/.config/roadrush-launcher/config.json`
 
+## AUR（Arch Linux 一键安装）
+```bash
+yay -S roadrush-launcher-git      # 装好后应用菜单里直接启动
+```
+打包文件在 `packaging/aur/`（`PKGBUILD` + `.install` + `.SRCINFO`）。
+
 ## 目录结构
 ```
 gui.py                  GTK4 界面（主窗口 + 首次运行向导）
