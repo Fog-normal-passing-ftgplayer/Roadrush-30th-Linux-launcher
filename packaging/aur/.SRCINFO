@@ -1,0 +1,23 @@
+pkgbase = roadrush-launcher-git
+	pkgdesc = Road Rash 30th Anniversary Edition 的 Linux 启动器（GTK4，Wine/Proton 自动探测，经典 MIDI 音乐切换）
+	pkgver = r24.5967279
+	pkgrel = 1
+	url = https://github.com/Fog-normal-passing-ftgplayer/Roadrush-30th-Linux-launcher
+	install = roadrush-launcher-git.install
+	arch = any
+	license = MIT
+	makedepends = git
+	depends = python
+	depends = python-gobject
+	depends = gtk4
+	optdepends = fluidsynth: MIDI 软音源（给 Game music 用）
+	optdepends = soundfont-fluid: GM 音色库 FluidR3_GM.sf2
+	optdepends = ffmpeg: 音乐槽位转换（8/16-bit RRA）
+	optdepends = steam: Proton 运行环境
+	optdepends = wine: 不回退到 Proton 时使用系统 wine
+	provides = roadrush-launcher
+	conflicts = roadrush-launcher
+	source = roadrush-launcher-git::git+https://github.com/Fog-normal-passing-ftgplayer/Roadrush-30th-Linux-launcher.git
+	sha256sums = SKIP
+
+pkgname = roadrush-launcher-git
