@@ -42,6 +42,7 @@
 | `seq-connect.c` | ALSA sequencer 桥：把 Wine 的 MIDI 端口订阅到 fluidsynth |
 | `music-mode.sh` | 原版/经典曲 两套配置切换（含备份与还原） |
 | `play.sh` / `start-midi-synth.sh` | 不依赖 GUI 的启动 / 软音源拉起 |
+| `audio-to-rra.sh` | 把**任意现成音频**（mp3/flac/ogg…）转成 `.RRA` 槽位并装入游戏（含备份） |
 
 ## 安装
 
@@ -72,7 +73,15 @@ GAME_DIR=/path/to/game SRC=~/Music/roadrush-classic tools/music-mode.sh classic
 ```
 配置文件：`~/.config/roadrush-launcher/config.json`
 
-### 经典 MIDI 音乐：一条命令搞定（不需要手动转换）
+### 更省事：直接用手头现成的原版音频
+```bash
+# 把任意音频换成某个槽位（自动备份原版，可 music-mode.sh original 还原）
+GAME_DIR=/path/to/game tools/audio-to-rra.sh 我的原版音轨.mp3 P_JESSIE
+GAME_DIR=/path/to/game tools/audio-to-rra.sh a.mp3 SG_KICKS b.flac T_AUTO   # 一次多个
+```
+（槽位名见 `docs/MUSIC.md`；比赛内是随机播放，换任意几个都行）
+
+### 或者从游戏文件自己渲染经典 MIDI 曲（不需要手动转换）
 ```bash
 cd Roadrush-30th-Linux-launcher/tools
 ./make-classic-music.sh --game /path/to/Road.Rash.30th.Anniversary.Edition --install
